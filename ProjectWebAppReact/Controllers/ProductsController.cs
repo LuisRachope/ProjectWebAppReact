@@ -41,19 +41,50 @@ namespace ProjectWebAppReact.Controllers
             return product;
         }
 
-        [HttpPost]
-        public void Post([FromBody] string value)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Edit(int id, [FromForm] Product product)
         {
+            if (id != product.Id)
+            {
+                return BadRequest();
+            }
+
+            _projectWebAppReactDbContext.Entry(product).State = EntityState.Modified;
+
+            try
+            {
+                await _projectWebAppReactDbContext.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                return NotFound();
+            }
+
+            return NoContent();
         }
 
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        [HttpPost]
+        public async Task<ActionResult> Create([FromForm] Product product)
         {
+            _projectWebAppReactDbContext.Products.Add(product);
+            await _projectWebAppReactDbContext.SaveChangesAsync();
+
+            return CreatedAtAction("Create", new { id = product.Id }, product);
         }
 
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
+            var product = await _projectWebAppReactDbContext.Products.FindAsync(id);
+            if (product is null)
+            {
+                return NotFound();
+            }
+
+            _projectWebAppReactDbContext.Products.Remove(product);
+            await _projectWebAppReactDbContext.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }
